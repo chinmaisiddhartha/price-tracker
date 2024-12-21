@@ -20,12 +20,14 @@ export class PriceService {
     private emailService: EmailService,
     private configService: ConfigService,
   ) {
+    // Initialize Moralis with our API key for blockchain data access
     Moralis.start({
       apiKey: this.configService.get('moralis.apiKey'),
     });
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  // Runs every 5 minutes to keep track of crypto prices and trigger alerts
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async trackPrices() {
     const chains = ['ethereum', 'polygon'];
     
@@ -35,11 +37,11 @@ export class PriceService {
       await this.checkPriceChange(chain);
       await this.checkAlerts(chain, price);
       
-      // Log for verification
       this.logger.log(`${chain} price: ${price}`);
     }
   }
 
+  // Fetches historical price data for the last X hours (defaults to 24)
   async getHourlyPrices(hours: number = 24) {
     return this.priceRepository
       .createQueryBuilder('price')
@@ -50,6 +52,7 @@ export class PriceService {
       .getMany();
   }
 
+  // Sets up price alerts and sends a test email to verify the email address
   async setAlert(chain: string, targetPrice: number, email: string) {
     const alert = this.alertRepository.create({
       chain,
@@ -57,7 +60,6 @@ export class PriceService {
       email,
     });
     
-    // Send test email immediately
     await this.emailService.sendPriceAlert(
       chain,
       targetPrice,
@@ -67,12 +69,13 @@ export class PriceService {
     return this.alertRepository.save(alert);
   }
 
+  // Calculates the conversion rate between ETH and BTC including fees
   async getSwapRate(ethAmount: number) {
     const ethPrice = await this.fetchPrice('ethereum');
     const btcPrice = await this.fetchPrice('bitcoin');
     
     const btcAmount = (ethAmount * ethPrice) / btcPrice;
-    const feePercentage = 0.03;
+    const feePercentage = 0.03; // 3% trading fee
     const feeInEth = ethAmount * feePercentage;
     const feeInUsd = feeInEth * ethPrice;
 
@@ -85,6 +88,7 @@ export class PriceService {
     };
   }
 
+  // Grabs real-time token prices from Moralis API with fallback values
   private async fetchPrice(chain: string): Promise<number> {
     try {
       const response = await Moralis.EvmApi.token.getTokenPrice({
@@ -95,11 +99,12 @@ export class PriceService {
       return response.raw.usdPrice;
     } catch (error) {
       this.logger.error(`Failed to fetch price for ${chain}: ${error.message}`);
-      // Return mock price for testing
+      // Fallback prices for testing - these should match recent market values
       return chain === 'ethereum' ? 2200 : 1.5;
     }
   }
 
+  // Maps blockchain names to their wrapped token contract addresses
   private getTokenAddress(chain: string): string {
     const addresses = {
       ethereum: '0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2', // WETH
@@ -109,6 +114,7 @@ export class PriceService {
     return addresses[chain.toLowerCase()];
   }
 
+  // Converts friendly chain names to their hexadecimal chain IDs
   private getChainId(chain: string): string {
     const chainIds = {
       ethereum: '0x1',
@@ -117,6 +123,7 @@ export class PriceService {
     return chainIds[chain.toLowerCase()];
   }
 
+  // Stores the latest price data in our database for historical tracking
   private async savePrice(chain: string, price: number) {
     const priceEntity = this.priceRepository.create({
       chain,
@@ -125,6 +132,7 @@ export class PriceService {
     await this.priceRepository.save(priceEntity);
   }
 
+  // Monitors significant price movements and sends notifications when needed
   private async checkPriceChange(chain: string) {
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     
@@ -145,13 +153,17 @@ export class PriceService {
     if (currentPrice && oldPrice) {
       const percentageChange = ((currentPrice.price - oldPrice.price) / oldPrice.price) * 100;
       
-      // Reduced threshold to 0.2% for testing
-      if (Math.abs(percentageChange) >= 0.5) {
-        await this.emailService.sendPriceChangeAlert(chain, percentageChange);
+      // Alert users if price moves more than 3% in any direction
+      if (Math.abs(percentageChange) >= 3) {
+        await this.emailService.sendPriceChangeAlert(
+          chain,
+          percentageChange
+        );
       }
     }
   }
 
+  // Processes all pending price alerts and notifies users when conditions are met
   private async checkAlerts(chain: string, currentPrice: number) {
     const pendingAlerts = await this.alertRepository.find({
       where: {
@@ -174,8 +186,9 @@ export class PriceService {
     }
   }
   
+  // Determines if a price alert should be triggered based on recent movement
   private isPriceThresholdMet(currentPrice: number, targetPrice: number): boolean {
-    const previousPrice = currentPrice - (currentPrice * 0.01);
+    const previousPrice = currentPrice - (currentPrice * 0.01); // Look at 1% price movement
     return (previousPrice < targetPrice && currentPrice >= targetPrice) ||
            (previousPrice > targetPrice && currentPrice <= targetPrice);
   }

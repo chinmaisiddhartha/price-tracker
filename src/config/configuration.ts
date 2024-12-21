@@ -16,6 +16,6 @@ export default () => ({
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
-  alertEmail: 'chinmai.siddhartha@gmail.com',
+  alertEmail: process.env.ALERT_EMAIL || 'hyperhire_assignment@hyperhire.in',
   });
   

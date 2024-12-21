@@ -7,6 +7,9 @@ import { Price } from './entities/price.entity';
 import { Alert } from './entities/alert.entity';
 import { EmailModule } from '../email/email.module';
 
+// Handles price tracking and alerts functionality
+// Integrates with TypeORM for data persistence
+// Uses scheduling for automated price checks
 @Module({
   imports: [
     TypeOrmModule.forFeature([Price, Alert]),
@@ -16,4 +19,5 @@ import { EmailModule } from '../email/email.module';
   controllers: [PriceController],
   providers: [PriceService],
 })
+
 export class PriceModule {}
