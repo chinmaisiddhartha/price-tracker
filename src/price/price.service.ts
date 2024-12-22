@@ -52,7 +52,7 @@ export class PriceService {
       .getMany();
   }
 
-  // Sets up price alerts and sends a test email to verify the email address
+  // Sets up price alerts and sends a confirmation email first 
   async setAlert(chain: string, targetPrice: number, email: string) {
     const alert = this.alertRepository.create({
       chain,
@@ -60,7 +60,7 @@ export class PriceService {
       email,
     });
     
-    await this.emailService.sendPriceAlert(
+    await this.emailService.sendPriceAlertConfirmation(
       chain,
       targetPrice,
       email
@@ -75,7 +75,7 @@ export class PriceService {
     const btcPrice = await this.fetchPrice('bitcoin');
     
     const btcAmount = (ethAmount * ethPrice) / btcPrice;
-    const feePercentage = 0.03; // 3% trading fee
+    const feePercentage = 0.03; // 0.03% trading fee
     const feeInEth = ethAmount * feePercentage;
     const feeInUsd = feeInEth * ethPrice;
 
@@ -153,7 +153,8 @@ export class PriceService {
     if (currentPrice && oldPrice) {
       const percentageChange = ((currentPrice.price - oldPrice.price) / oldPrice.price) * 100;
       
-      // Alert users if price moves more than 3% in any direction
+      // Send email alert to alert email if price moves more than 3% in any direction
+      // alert email we are using is hyperhire_assignment@hyperhire.in
       if (Math.abs(percentageChange) >= 3) {
         await this.emailService.sendPriceChangeAlert(
           chain,

@@ -39,10 +39,10 @@ export class EmailService {
   }
 
   /**
-   * Sends alerts for significant price movements
-   * Useful for monitoring volatile market conditions
+   * Sends alerts for significant price movements   *
    * @param chain - The blockchain/token being monitored
    * @param percentageChange - How much the price moved in the last hour
+   * alert email is currently set to hyperhire_assignment@hyperhire.in in configuration.ts 
    */
   async sendPriceChangeAlert(chain: string, percentageChange: number) {
     await this.transporter.sendMail({
@@ -50,6 +50,23 @@ export class EmailService {
       to: this.configService.get('alertEmail'),
       subject: `${chain} Price Change Alert`,
       text: `${chain} price has changed by ${percentageChange}% in the last hour`,
+    });
+  }
+
+
+   /**
+   * Sends alert confirmation email to user 
+   * @param chain - The token name
+   * @param price - The target price that was specified
+   * @param email - Where to send the notification
+   */
+
+  async sendPriceAlertConfirmation(chain: string, price: number, email: string) {
+    await this.transporter.sendMail({
+      from: this.configService.get('email.user'),
+      to: email,
+      subject: `Price Alert for ${chain} is set`,
+      text: `Price alert has been set. You will receive price of ${chain} when it reaches ${price}`,
     });
   }
 }

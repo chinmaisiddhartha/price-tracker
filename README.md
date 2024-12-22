@@ -12,8 +12,8 @@
 ## What it does
 
 - Tracks ETH and Polygon prices every 5 minutes
-- Sends email alerts for 3% price changes to hyperhire_assignment@hyperhire.in
-- Allows users to set custom price alerts
+- Sends automatic email alerts for 3% price changes to hyperhire_assignment@hyperhire.in
+- Allows users to set custom price alerts, sent to specified email
 - Provides ETH-BTC swap rate calculator with 0.03% fees
 - Shows 24-hour price history
 
@@ -25,14 +25,14 @@
 - Swagger UI
 
 ## Project Structure
-
+```
 src/
 ├── config/         # Configuration management
 ├── email/          # Email notification system
 ├── price/          # Price tracking and alerts
 └── main.ts         # Application entry point
-
-# Environment Setup
+```
+## Environment Setup
 
 Copy `.env.example` to `.env` and update the values according to the instructions provided in the example file.
 
@@ -45,28 +45,45 @@ The application runs in containerized environment
 One command to run everything
 
 ```bash
-$ docker compose up --build
+docker compose up --build
 ```
 
 Visit [http://localhost:3000/api](http://localhost:3000/api) for Swagger UI
 
+![Swagger UI API Endpoints](<swagger-ui.png>)
+
 
 ## API Endpoints
 
-```
+### Get 24-hour Price History
+```http
 GET /prices/hourly
-// 24-hour price history
-
-POST /prices/alerts
-{
-  "chain": "ethereum",
-  "targetPrice": 2000,
-  "email": "user@example.com"
-}
-
-GET /prices/swap-rate?ethAmount=1.5
-// Returns BTC amount and fees
 ```
+
+### Set Custom Price Alert
+
+```http
+POST /prices/alerts
+```
+
+#### Request body
+
+```
+{
+    "chain": "ethereum",
+    "targetPrice": 2000,
+    "email": "user@example.com"
+}
+```
+
+### Get ETH-BTC Swap Rate
+
+```http
+GET /prices/swap-rate
+```
+
+Returns BTC amount and fees for the given ETH amount.
+
 
 ## Development
 
@@ -82,9 +99,13 @@ yarn start:dev
 ```
 
 
-## Thank You
+## Connect With Me
 
-- Author - [Chinmai Siddhartha](https://www.linkedin.com/in/ncsiddhartha/)
+- LinkedIn - [Chinmai Siddhartha](https://www.linkedin.com/in/ncsiddhartha/)
 
+- Check out my DeFi development: [Cross-Protocol Arbitrage Smart Contract](https://github.com/chinmaisiddhartha/balancer-fl)
+  - Executes flash loan arbitrage across multiple DEX protocols
+  - Integrates Uniswap V2/V3, PancakeSwap, and Aerodrome
+  - Uses advanced features like ECDSA signatures and submarine sends
+  - Implements MEV protection mechanisms
 
-- Check out my Solidity development skills - [smart contract involves multiple defi protocols](https://github.com/chinmaisiddhartha/balancer-fl).
